@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
 app = Flask(__name__)
@@ -13,7 +14,7 @@ db = SQLAlchemy(app)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
 
 # Create the database tables
 with app.app_context():
@@ -32,11 +33,13 @@ def register():
     if User.query.filter_by(username=data["username"]).first():
         return jsonify({"status": "error", "message": "User already exists"}), 400
 
-    new_user = User(username=data["username"], password=data["password"])
+    # Securely hash the password
+    hashed_password = generate_password_hash(data["password"])
+    new_user = User(username=data["username"], password_hash=hashed_password)
     db.session.add(new_user)
     db.session.commit()
     
-    return jsonify({"status": "success", "message": f"User {data['username']} registered successfully!"})
+    return jsonify({"status": "success", "message": f"User {data['username']} registered securely!"})
 
 @app.route("/login", methods=['POST'])
 def login():
@@ -47,8 +50,10 @@ def login():
     username = data.get("username")
     password = data.get("password")
 
-    user = User.query.filter_by(username=username, password=password).first()
-    if user:
+    user = User.query.filter_by(username=username).first()
+    
+    # Verify user exists and the password matches the stored hash
+    if user and check_password_hash(user.password_hash, password):
         return jsonify({"status": "success", "message": f"Welcome back, {username}!"})
     else:
         return jsonify({"status": "error", "message": "Invalid credentials"}), 401
