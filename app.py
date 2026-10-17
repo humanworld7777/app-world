@@ -1,4 +1,4 @@
-from flask import Flask, reques, jsonify
+from flask import Flask, request, jsonify
 app = Flask(__name__)
 @app.route("/login", methods=['GET', "POST"])
 def login():
@@ -8,7 +8,7 @@ def login():
     password = data.get("password", "")
 
 if username == "admin" and password == "secret123":
-  return jsonify({"status": "sucess", "message": f"Welcome back, {username}!"})
+  return jsonify({"status": "success", "message": f"Welcome back, {username}!"})
 else:
   return jsonify({"status": "error", "message": "Invalid credential"}), 401
 
