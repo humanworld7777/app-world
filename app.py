@@ -33,7 +33,6 @@ def register():
     if User.query.filter_by(username=data["username"]).first():
         return jsonify({"status": "error", "message": "User already exists"}), 400
 
-    # Securely hash the password
     hashed_password = generate_password_hash(data["password"])
     new_user = User(username=data["username"], password_hash=hashed_password)
     db.session.add(new_user)
@@ -52,11 +51,31 @@ def login():
 
     user = User.query.filter_by(username=username).first()
     
-    # Verify user exists and the password matches the stored hash
     if user and check_password_hash(user.password_hash, password):
         return jsonify({"status": "success", "message": f"Welcome back, {username}!"})
     else:
         return jsonify({"status": "error", "message": "Invalid credentials"}), 401
+
+@app.route("/profile", methods=['POST'])
+def profile():
+    data = request.get_json()
+    if not data or not data.get("username"):
+        return jsonify({"status": "error", "message": "Username required to view profile"}), 400
+
+    username = data.get("username")
+    user = User.query.filter_by(username=username).first()
+
+    if user:
+        return jsonify({
+            "status": "success",
+            "profile": {
+                "id": user.id,
+                "username": user.username,
+                "account_status": "Active & Secure"
+            }
+        })
+    else:
+        return jsonify({"status": "error", "message": "User not found"}), 404
 
 if __name__ == "__main__":
     app.run(debug=True, port=5009)
