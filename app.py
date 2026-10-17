@@ -2,6 +2,10 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
+@app.route("/")
+def home():
+    return jsonify({"status": "success", "message": "Welcome to my Flask API!"})
+
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
